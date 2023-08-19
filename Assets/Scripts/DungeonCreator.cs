@@ -19,20 +19,6 @@ public class DungeonCreator : MonoBehaviour
     {
         roomQuadrangulars = new[] { roomQuadrangular, roomQuadrangular_wall_1_3, roomQuadrangular_wall_2_3_4, roomQuadrangular_wall_3, roomQuadrangular_wall_3_4 };
 
-        // (test) Instantiate random rooms around starting room
-        int dungeonLength = roomQuadrangularPositions.GetLength(0);
-
-        /*for (int i = 0; i < dungeonLength; i++)
-        {
-            for (int j = 0; j < dungeonLength; j++)
-            {
-                if (i == DUNGEON_SIZE && j == DUNGEON_SIZE)
-                {
-                    continue;
-                }
-                Instantiate(roomQuadrangulars[Random.Range(1, roomQuadrangulars.Length)], roomQuadrangularPositions[i, j], Quaternion.identity);
-            }
-        }*/
         buildDungeon();
     }
 
@@ -113,6 +99,18 @@ public class DungeonCreator : MonoBehaviour
                     }
                 }
             }
+        }
+
+        // Designate safe path from starting room to exit and build rooms with combined corridor
+        int safePathLength = DUNGEON_SIZE * (int)Mathf.Sqrt(DUNGEON_SIZE);
+        Vector3[] safePath = new Vector3[safePathLength];
+        safePath[0] = roomQuadrangularPositions[DUNGEON_SIZE, DUNGEON_SIZE];
+        safePath[safePathLength - 1] = exitPosition;
+
+        for (int i = 1; i < safePathLength - 1; i++)
+        {
+            int stepsLeft = safePathLength - 1 - i;
+            Vector3 previousStep = safePath[i - 1];
         }
     }
 
