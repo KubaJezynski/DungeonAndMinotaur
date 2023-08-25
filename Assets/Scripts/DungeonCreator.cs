@@ -356,7 +356,7 @@ public class DungeonCreator : MonoBehaviour
         }
     }
 
-    private static bool CalculateDistanceTreshold(Vector2 p1, Vector2 p2, float treshold)
+    private static bool CalculateDistanceWithTreshold(Vector2 p1, Vector2 p2, float treshold)
     {
         float distance = Vector3.Distance(p1, p2);
 
@@ -367,7 +367,7 @@ public class DungeonCreator : MonoBehaviour
     {
         foreach (Vector3 p in positions)
         {
-            if (CalculateDistanceTreshold(p, position, treshold))
+            if (CalculateDistanceWithTreshold(p, position, treshold))
             {
                 return true;
             }
@@ -380,7 +380,7 @@ public class DungeonCreator : MonoBehaviour
     {
         for (int i = 0; i < rooms.Count; i++)
         {
-            if (CalculateDistanceTreshold(rooms[i].position, position, treshold))
+            if (CalculateDistanceWithTreshold(rooms[i].position, position, treshold))
             {
                 return i;
             }
@@ -393,7 +393,7 @@ public class DungeonCreator : MonoBehaviour
     {
         foreach (GameObject go in gameObjects)
         {
-            if (CalculateDistanceTreshold(go.transform.position, position, treshold))
+            if (CalculateDistanceWithTreshold(go.transform.position, position, treshold))
             {
                 return go;
             }
