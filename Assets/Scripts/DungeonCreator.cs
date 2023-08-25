@@ -1,25 +1,26 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class DungeonCreator : MonoBehaviour
 {
-    private const int DUNGEON_SIZE = 5;
-    private const int ROOM_QUADRANGULAR_SIDE_LENGTH = 5;
+    private const int DUNGEON_SIZE = 10;
 
-    [SerializeField] private GameObject roomQuadrangular;
-    [SerializeField] private GameObject roomQuadrangular_wall_1_3;
-    [SerializeField] private GameObject roomQuadrangular_wall_2_3_4;
-    [SerializeField] private GameObject roomQuadrangular_wall_3;
-    [SerializeField] private GameObject roomQuadrangular_wall_3_4;
-    private GameObject[] roomQuadrangulars;
-    private Vector3[,] roomQuadrangularPositions = CalculateSpace(DUNGEON_SIZE, ROOM_QUADRANGULAR_SIDE_LENGTH);
+    [SerializeField] private GameObject dungeonRoomTypePrefab;
+
+    private DungeonRoomType roomType;
+    private DungeonRoomStruct startingRoom = new DungeonRoomStruct();
+    private DungeonRoomStruct endingRoom = new DungeonRoomStruct();
+    private List<DungeonRoomStruct> emptyRooms = new List<DungeonRoomStruct>();
+    private List<GameObject> floors = new List<GameObject>();
+    private List<GameObject> walls = new List<GameObject>();
+    private List<DungeonRoomStruct> safePath = new List<DungeonRoomStruct>();
 
     void Awake()
     {
-        roomQuadrangulars = new[] { roomQuadrangular, roomQuadrangular_wall_1_3, roomQuadrangular_wall_2_3_4, roomQuadrangular_wall_3, roomQuadrangular_wall_3_4 };
+        roomType = Instantiate(dungeonRoomTypePrefab).GetComponent<DungeonRoomType>();
+        CreateSpace(DUNGEON_SIZE, roomType);
 
-        buildDungeon();
+        BuildDungeon();
     }
 
     // Start is called before the first frame update
@@ -34,91 +35,384 @@ public class DungeonCreator : MonoBehaviour
 
     }
 
-    private static Vector3[,] CalculateSpace(int size, int distance)
+    // Create rooms structs
+    private void CreateSpace(int size, DungeonRoomType roomType)
     {
-        int n = size * 2 + 1;
-        Vector3[,] result = new Vector3[n, n];
-        int x = -size * distance;
-        int y = -size * distance;
+        int safePathStepsCount = Random.Range(size, size * 2);
+        float distanceTreshold = roomType.diameter * 0.99f;
+        float halfCornerAngle = roomType.cornerAngle / 2f;
+        bool isOddCorner = roomType.cornersCount % 2 == 0 ? false : true;
 
-        for (int i = 0; i < n; i++)
+        // Starting room
+        this.startingRoom = new DungeonRoomStruct(Vector3.zero, new Quaternion(), roomType);
+        this.emptyRooms.Add(startingRoom);
+
+        // Safe path rooms
+        for (int i = 0; i < safePathStepsCount; i++)
         {
-            for (int j = 0; j < n; j++)
+            DungeonRoomStruct currentRoom = emptyRooms[emptyRooms.Count - 1];
+            float currentAngle = roomType.cornerAngle * Random.Range(0, roomType.cornersCount);
+
+            for (int j = 0; j < currentRoom.type.cornersCount; j++)
             {
-                result[i, j] = new Vector3(x + i * distance, y + j * distance, 0);
+                Vector3 newPosition = CalculateNextPosition(currentRoom, currentAngle);
+
+                if (FindIndexWithTreshold(this.emptyRooms, newPosition, distanceTreshold) < 0)
+                {
+                    float oddCornersAngle = !isOddCorner ? 0 : currentRoom.rotation.eulerAngles.z % currentRoom.type.cornerAngle == 0 ? halfCornerAngle : 0;
+                    DungeonRoomStruct newRoom = new DungeonRoomStruct(newPosition, Quaternion.Euler(new Vector3(0, 0, oddCornersAngle)), roomType);
+                    this.emptyRooms.Add(newRoom);
+                    this.safePath.Add(newRoom);
+                    break;
+                }
+
+                currentAngle += currentRoom.type.cornerAngle;
             }
         }
 
-        return result;
+        // Ending room
+        for (int i = 0; i < safePath.Count; i++)
+        {
+            bool endingRoomCreated = false;
+            DungeonRoomStruct safePathLastRoom = safePath[safePath.Count - 1 - i];
+
+            for (int j = 0; j < safePathLastRoom.type.cornersCount; j++)
+            {
+                float currentAngle = safePathLastRoom.type.cornerAngle * j;
+                Vector3 newPosition = CalculateNextPosition(safePathLastRoom, currentAngle);
+
+                if (FindIndexWithTreshold(this.emptyRooms, newPosition, distanceTreshold) < 0)
+                {
+                    float oddCornersAngle = !isOddCorner ? 0 : safePathLastRoom.rotation.eulerAngles.z % safePathLastRoom.type.cornerAngle == 0 ? halfCornerAngle : 0;
+                    DungeonRoomStruct newRoom = new DungeonRoomStruct(newPosition, Quaternion.Euler(new Vector3(0, 0, oddCornersAngle)), roomType);
+                    this.emptyRooms.Add(newRoom);
+                    this.endingRoom = newRoom;
+                    endingRoomCreated = true;
+                    break;
+                }
+            }
+
+            if (endingRoomCreated)
+            {
+                break;
+            }
+        }
+
+        // Other rooms
+        List<DungeonRoomStruct> iLoopRooms = new List<DungeonRoomStruct>();
+        List<DungeonRoomStruct> otherRooms = new List<DungeonRoomStruct>();
+        emptyRooms.ForEach(room => iLoopRooms.Add(room));
+
+        for (int i = 0; i < size; i++)
+        {
+            List<DungeonRoomStruct> newRooms = new List<DungeonRoomStruct>();
+
+            for (int j = 0; j < iLoopRooms.Count; j++)
+            {
+                float oddCornersAngle = !isOddCorner ? 0 : iLoopRooms[j].rotation.eulerAngles.z % iLoopRooms[j].type.cornerAngle == 0 ? halfCornerAngle : 0;
+
+                for (int k = 0; k < roomType.cornersCount; k++)
+                {
+                    float currentAngle = k * iLoopRooms[j].type.cornerAngle;
+                    Vector3 newPosition = CalculateNextPosition(iLoopRooms[j], currentAngle);
+
+                    if (FindIndexWithTreshold(this.emptyRooms, newPosition, distanceTreshold) < 0)
+                    {
+                        DungeonRoomStruct newEmptyRoom = new DungeonRoomStruct(newPosition, Quaternion.Euler(new Vector3(0, 0, oddCornersAngle)), roomType);
+                        newRooms.Add(newEmptyRoom);
+                        emptyRooms.Add(newEmptyRoom);
+                        otherRooms.Add(newEmptyRoom);
+                    }
+                }
+            }
+
+            iLoopRooms = newRooms;
+        }
+
+        // Remove some other rooms
+        int nRoomsToRemove = Random.Range(otherRooms.Count / 4, otherRooms.Count / 3);
+
+        for (int i = 0; i < nRoomsToRemove; i++)
+        {
+            DungeonRoomStruct otherRoom = otherRooms[Random.Range(0, otherRooms.Count)];
+            int index = FindIndexWithTreshold(emptyRooms, otherRoom.position, distanceTreshold);
+
+            if (!(index < 0))
+            {
+                emptyRooms.RemoveAt(index);
+            }
+        }
     }
 
-    private void buildDungeon()
+    private void BuildDungeon()
     {
-        // First instantiate starting room at position zero
-        Instantiate(roomQuadrangulars[0], roomQuadrangularPositions[DUNGEON_SIZE, DUNGEON_SIZE], Quaternion.identity);
-
-        // Choose exit position and instantiate starting room
-        int index = Random.Range(0, 2) == 0 ? 0 : roomQuadrangularPositions.GetLength(0) - 1;
-        Vector3 exitPosition = Random.Range(0, 2) == 0 ? roomQuadrangularPositions[index, Random.Range(0, roomQuadrangularPositions.GetLength(1))] :
-                                                        roomQuadrangularPositions[Random.Range(0, roomQuadrangularPositions.GetLength(0)), index];
-        Instantiate(roomQuadrangulars[0], exitPosition, Quaternion.identity);
-
-        // Build rooms with walls around edge of dungeon
-        int dungeonLength = roomQuadrangularPositions.GetLength(0);
-
-        for (int i = 0; i < dungeonLength; i++)
+        // Instantiate and add floors to list
+        foreach (DungeonRoomStruct room in emptyRooms)
         {
-            for (int j = 0; j < dungeonLength; j++)
+            floors.Add(Instantiate(room.type.floor, new Vector3(room.position.x, room.position.y, room.position.z + room.type.wall.transform.localScale.z / 2f), room.rotation));
+        }
+
+        /* Just color starting room on green, ending room on red, safe path on yellow, delete later */
+        foreach (GameObject floor in floors)
+        {
+            if (floor.transform.position == new Vector3(startingRoom.position.x, startingRoom.position.y, floor.transform.position.z))
             {
-                Vector3 pos0 = roomQuadrangularPositions[DUNGEON_SIZE, DUNGEON_SIZE];
-                Vector3 pos1 = roomQuadrangularPositions[i, j];
-                int angle = (int)calculateAngle(pos0, pos1);
+                floor.GetComponent<Renderer>().material.color = new Color(0, 255, 0);
+            }
+            else if (floor.transform.position == new Vector3(endingRoom.position.x, endingRoom.position.y, floor.transform.position.z))
+            {
+                floor.GetComponent<Renderer>().material.color = new Color(255, 0, 0);
+            }
+            else if (!(FindIndexWithTreshold(safePath, floor.transform.position, roomType.diameter * 0.99f) < 0))
+            {
+                floor.GetComponent<Renderer>().material.color = new Color(255, 255, 0);
+            }
+        }
 
-                if ((i > 0 && i < dungeonLength - 1) && (j > 0 && j < dungeonLength - 1))
+        // Divide rooms into extreme and not
+        List<DungeonRoomStruct> extremeRooms = new List<DungeonRoomStruct>();
+        List<DungeonRoomStruct> notExtremeRooms = new List<DungeonRoomStruct>();
+
+        DivideRoomsIntoExtremeAndNot(emptyRooms, extremeRooms, notExtremeRooms);
+
+        Debug.Log("extremeRooms = " + extremeRooms.Count);
+        Debug.Log("notExtremeRooms = " + notExtremeRooms.Count);
+
+        // Build walls at the extreme positions of rooms except ending room
+        foreach (DungeonRoomStruct room in extremeRooms)
+        {
+            if (room.Equals(endingRoom))
+            {
+                continue;
+            }
+
+            int angle;
+            for (int i = 0; i < roomType.cornersCount; i++)
+            {
+                Vector3 newPosition = CalculateNextPosition(room, i * room.type.cornerAngle);
+
+                if (!System.Array.Exists(emptyRooms.ToArray(), room => room.position == newPosition))
                 {
-                    continue;
-                }
-                else
-                {
-                    if (pos1 == exitPosition)
-                    {
-                        continue;
-                    }
-
-                    if (angle % 45 == 0 && angle % 90 != 0)
-                    {
-                        Instantiate(roomQuadrangular_wall_3_4, roomQuadrangularPositions[i, j], Quaternion.Euler(new Vector3(0, 0, -angle - 135)));
-                    }
-                    else
-                    {
-                        angle = angle > 45 && angle < 135 ? 90 :
-                                angle > 135 || angle < -135 ? 0 :
-                                angle < -45 && angle > -135 ? -90 : 180;
-
-                        Instantiate(roomQuadrangular_wall_3, roomQuadrangularPositions[i, j], Quaternion.Euler(new Vector3(0, 0, angle)));
-                    }
+                    angle = (int)CalculateAngle(room.position, newPosition);
+                    walls.Add(Instantiate(roomType.wall, CalculateNextPosition(room, i * room.type.cornerAngle, room.type.diameter / 2f), Quaternion.Euler(new Vector3(0, 0, -angle))));
                 }
             }
         }
 
-        // Designate safe path from starting room to exit and build rooms with combined corridor
-        int safePathLength = DUNGEON_SIZE * (int)Mathf.Sqrt(DUNGEON_SIZE);
-        Vector3[] safePath = new Vector3[safePathLength];
-        safePath[0] = roomQuadrangularPositions[DUNGEON_SIZE, DUNGEON_SIZE];
-        safePath[safePathLength - 1] = exitPosition;
+        // Create list of positions where wall can be instantiate
+        /*List<Vector3> notInstantiableWallPositions = new List<Vector3>();
+        List<Vector3> instantiableWallPositions = new List<Vector3>();
+        List<float> instantiableWallAngles = new List<float>();
+        walls.ForEach(wall => notInstantiableWallPositions.Add(wall.transform.position));
 
-        for (int i = 1; i < safePathLength - 1; i++)
+        for (int i = 0; i < safePath.Count - 1; i++)
         {
-            int stepsLeft = safePathLength - 1 - i;
-            Vector3 previousStep = safePath[i - 1];
+            DungeonRoomStruct currentRoom = safePath[i];
+            Vector3 currentPosition = currentRoom.position;
+            float newAngle = CalculateAngle(currentPosition, safePath[i + 1].position);
+            Vector3 newPosition = new Vector3(currentPosition.x + Mathf.Sin(Mathf.Deg2Rad * newAngle) * currentRoom.type.diameter / 2f,
+                                            currentPosition.y + Mathf.Cos(Mathf.Deg2Rad * newAngle) * currentRoom.type.diameter / 2f,
+                                            currentPosition.z);
+            notInstantiableWallPositions.Add(newPosition);
         }
+
+        foreach (DungeonRoomStruct room in emptyRooms)
+        {
+            for (int i = 0; i < room.type.cornersCount; i++)
+            {
+                Vector3 nextWallPosition = CalculateNextPosition(room, i * room.type.cornerAngle, room.type.diameter / 2f);
+
+                if (!ContainsWithTreshold(notInstantiableWallPositions, nextWallPosition, room.type.diameter / 10f))
+                {
+                    instantiableWallPositions.Add(nextWallPosition);
+                    instantiableWallAngles.Add(CalculateAngle(room.position, nextWallPosition));
+                }
+            }
+        }*/
+
+        // Instantiate walls randomly and add to walls list
+        /*int nWalls = Random.Range(emptyRooms.Count / 4, emptyRooms.Count / 3);
+
+        for (int i = 0; i < nWalls; i++)
+        {
+            int index = Random.Range(0, instantiableWallPositions.Count);
+            Vector3 wallPosition = instantiableWallPositions[index];
+            walls.Add(Instantiate(roomType.wall, wallPosition, Quaternion.Euler(new Vector3(0, 0, -instantiableWallAngles[index]))));
+            instantiableWallPositions.RemoveAt(index);
+            instantiableWallAngles.RemoveAt(index);
+        }*/
     }
 
-    private float calculateAngle(Vector2 p1, Vector2 p2)
+    private Vector3 CalculateNextPosition(DungeonRoomStruct room, float rotationAngle)
+    {
+        return CalculateNextPosition(room, rotationAngle, room.type.diameter);
+    }
+
+    private Vector3 CalculateNextPosition(DungeonRoomStruct room, float rotationAngle, float distance)
+    {
+        return new Vector3(room.position.x + Mathf.Sin(Mathf.Deg2Rad * (rotationAngle + room.rotation.eulerAngles.z)) * distance,
+                            room.position.y + Mathf.Cos(Mathf.Deg2Rad * (rotationAngle + room.rotation.eulerAngles.z)) * distance,
+                            room.position.z);
+    }
+
+    private static float CalculateAngle(Vector2 p1, Vector2 p2)
     {
         float y = p2.y - p1.y;
         float x = p2.x - p1.x;
 
         return Mathf.Atan2(x, y) * Mathf.Rad2Deg;
+    }
+
+    private float CalculateNearestAngle(float angle, DungeonRoomStruct room)
+    {
+        List<Vector3> emptyRoomsPositions = new List<Vector3>();
+        emptyRooms.ForEach(room => emptyRoomsPositions.Add(room.position));
+        float nearestAngle = 360f;
+        float angleDifference = 360f;
+
+        for (int i = 0; i < room.type.cornersCount; i++)
+        {
+            Vector3 newPosition = CalculateNextPosition(room, i * room.type.cornerAngle);
+
+            if (ContainsWithTreshold(emptyRoomsPositions, newPosition, room.type.diameter / 10f))
+            {
+                float newAngle = CalculateAngle(room.position, newPosition);
+                float newAngleDifference = Mathf.Abs(angle - newAngle);
+
+                if (newAngleDifference < angleDifference)
+                {
+                    nearestAngle = newAngle;
+                    angleDifference = newAngleDifference;
+                }
+            }
+        }
+
+        return nearestAngle;
+    }
+
+    private DungeonRoomStruct CalculateNextRoom(DungeonRoomStruct startingRoom, DungeonRoomStruct endingRoom)
+    {
+        float turnAroundAngle = CalculateAngle(startingRoom.position, endingRoom.position);
+        turnAroundAngle = CalculateNearestAngle(turnAroundAngle, startingRoom);
+        Vector3 nextRoomPosition = new Vector3(startingRoom.position.x + Mathf.Sin(Mathf.Deg2Rad * turnAroundAngle) * startingRoom.type.diameter,
+                                                startingRoom.position.y + Mathf.Cos(Mathf.Deg2Rad * turnAroundAngle) * startingRoom.type.diameter,
+                                                startingRoom.position.z);
+        int index = FindIndexWithTreshold(emptyRooms, nextRoomPosition, startingRoom.type.diameter / 10f);
+
+        return index < 0 ? startingRoom : emptyRooms[index];
+    }
+
+    private int CalculateDistanceSteps(DungeonRoomStruct startingRoom, DungeonRoomStruct endingRoom)
+    {
+        DungeonRoomStruct currentRoom = startingRoom;
+        int distanceSteps = 0;
+
+        for (int i = 0; i < emptyRooms.Count; i++)
+        {
+            currentRoom = CalculateNextRoom(currentRoom, endingRoom);
+
+            if (endingRoom.position.Equals(currentRoom.position))
+            {
+                break;
+            }
+
+            distanceSteps++;
+        }
+
+        Debug.Log("distanceSteps = " + distanceSteps);
+        return distanceSteps;
+    }
+
+    private bool IsExtremeRoom(DungeonRoomStruct room)
+    {
+        for (int i = 0; i < room.type.cornersCount; i++)
+        {
+            Vector3 newPosition = CalculateNextPosition(room, i * room.type.cornerAngle);
+
+            if (!System.Array.Exists(emptyRooms.ToArray(), emptyRoom => emptyRoom.position == newPosition))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void DivideRoomsIntoExtremeAndNot(List<DungeonRoomStruct> rooms, List<DungeonRoomStruct> extremeRooms, List<DungeonRoomStruct> notExtremeRooms)
+    {
+        extremeRooms.Clear();
+        notExtremeRooms.Clear();
+
+        foreach (DungeonRoomStruct room in emptyRooms)
+        {
+            if (IsExtremeRoom(room))
+            {
+                extremeRooms.Add(room);
+            }
+            else
+            {
+                notExtremeRooms.Add(room);
+            }
+        }
+    }
+
+    private static bool CalculateDistanceTreshold(Vector2 p1, Vector2 p2, float treshold)
+    {
+        float distance = Vector3.Distance(p1, p2);
+
+        return distance < treshold;
+    }
+
+    private static bool ContainsWithTreshold(List<Vector3> positions, Vector3 position, float treshold)
+    {
+        foreach (Vector3 p in positions)
+        {
+            if (CalculateDistanceTreshold(p, position, treshold))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private int FindIndexWithTreshold(List<DungeonRoomStruct> rooms, Vector3 position, float treshold)
+    {
+        for (int i = 0; i < rooms.Count; i++)
+        {
+            if (CalculateDistanceTreshold(rooms[i].position, position, treshold))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private GameObject FindWithTreshold(List<GameObject> gameObjects, Vector3 position, float treshold)
+    {
+        foreach (GameObject go in gameObjects)
+        {
+            if (CalculateDistanceTreshold(go.transform.position, position, treshold))
+            {
+                return go;
+            }
+        }
+
+        return null;
+    }
+
+    public readonly struct DungeonRoomStruct
+    {
+        public Vector3 position { get; }
+        public Quaternion rotation { get; }
+        public DungeonRoomType type { get; }
+
+        public DungeonRoomStruct(Vector3 position, Quaternion rotation, DungeonRoomType type)
+        {
+            this.position = position;
+            this.rotation = rotation;
+            this.type = type;
+        }
     }
 }

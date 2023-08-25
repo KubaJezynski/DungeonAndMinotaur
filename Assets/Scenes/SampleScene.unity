@@ -246,11 +246,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ce8cfdfc3a712749bf89ecf1ba84ba5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  roomQuadrangular: {fileID: 5782634494553680720, guid: 5803d34431f77414eb532e55d969b138, type: 3}
-  roomQuadrangular_wall_1_3: {fileID: 2380002314872986761, guid: ad974837408f7b34c9eed7a2cd885d14, type: 3}
-  roomQuadrangular_wall_2_3_4: {fileID: 1362639294393003212, guid: 53289a9f9d5ee1b4b83b5e8011601f50, type: 3}
-  roomQuadrangular_wall_3: {fileID: 1973620028924081356, guid: 3fbc191338fb8d9428f5940f7bd07d5e, type: 3}
-  roomQuadrangular_wall_3_4: {fileID: 841982733907206947, guid: c1ce5b601adcefa41a2dced9cdceb89d, type: 3}
+  dungeonRoomTypePrefab: {fileID: 5286855268482506209, guid: ceff07e6b954f0f438656a136c5a9b64, type: 3}
 --- !u!4 &806775998
 Transform:
   m_ObjectHideFlags: 0
@@ -327,7 +323,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 30
+  orthographic size: 100
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
