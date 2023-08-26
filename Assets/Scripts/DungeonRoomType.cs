@@ -10,17 +10,19 @@ public class DungeonRoomType : MonoBehaviour
     [SerializeField] private GameObject floorQuadrangularPrefab;
     [SerializeField] private GameObject floorPentagonalPrefab;
     [SerializeField] private GameObject floorHexagonalPrefab;
+    [SerializeField] private GameObject floorHeptagonalPrefab;
+    [SerializeField] private GameObject floorOctagonalPrefab;
 
     public float diameter { get; private set; }
     public int cornersCount { get; private set; }
-    public int cornerAngle { get; private set; }
+    public float cornerAngle { get; private set; }
     public GameObject stair { get; private set; }
     public GameObject wall { get; private set; }
     public GameObject floor { get; private set; }
 
     void Awake()
     {
-        Create(FloorType.HEXAGONAL, SIDE_LENGTH);
+        Create(FloorType.OCTAGONAL, SIDE_LENGTH);
     }
 
     private void Create(FloorType floorType, int sideLength)
@@ -44,6 +46,14 @@ public class DungeonRoomType : MonoBehaviour
                 r = sideLength * Mathf.Sqrt(3) / 2f;
                 SetRoom(r * 2, 6, stairPrefab, wallPrefab, floorHexagonalPrefab);
                 break;
+            case FloorType.HEPTAGONAL:
+                r = sideLength / (2 * Mathf.Tan(Mathf.PI / 7));
+                SetRoom(r * 2, 7, stairPrefab, wallPrefab, floorHeptagonalPrefab);
+                break;
+            case FloorType.OCTAGONAL:
+                r = sideLength * (1 + Mathf.Sqrt(2)) / 2;
+                SetRoom(r * 2, 8, stairPrefab, wallPrefab, floorOctagonalPrefab);
+                break;
         }
     }
 
@@ -51,7 +61,7 @@ public class DungeonRoomType : MonoBehaviour
     {
         this.diameter = diameter;
         this.cornersCount = cornersCount;
-        this.cornerAngle = 360 / cornersCount;
+        this.cornerAngle = 360f / cornersCount;
         this.stair = stair;
         this.wall = wall;
         this.floor = floor;
@@ -62,6 +72,8 @@ public class DungeonRoomType : MonoBehaviour
         TRIANGULAR,
         QUADRANGULAR,
         PENTAGONAL,
-        HEXAGONAL
+        HEXAGONAL,
+        HEPTAGONAL,
+        OCTAGONAL
     }
 }

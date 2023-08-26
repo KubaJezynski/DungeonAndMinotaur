@@ -50,3 +50,5 @@ MonoBehaviour:
   floorQuadrangularPrefab: {fileID: 1665968620792745384, guid: 85f3a9bf3616a504d8d9b54ac589833a, type: 3}
   floorPentagonalPrefab: {fileID: 919132149155446097, guid: 0c37dd089790b504e899918a70575adf, type: 3}
   floorHexagonalPrefab: {fileID: 919132149155446097, guid: 8c42c712c7bee694b9f652cf19a044f1, type: 3}
+  floorHeptagonalPrefab: {fileID: 919132149155446097, guid: 731d775556d4ba047ad4849ca45c6926, type: 3}
+  floorOctagonalPrefab: {fileID: 919132149155446097, guid: e25e213f328500841a56e9225a6a8c3a, type: 3}
