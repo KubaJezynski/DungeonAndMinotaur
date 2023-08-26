@@ -13,6 +13,7 @@ public class DungeonCreator : MonoBehaviour
     private List<DungeonRoomStruct> emptyRooms = new List<DungeonRoomStruct>();
     private List<GameObject> floors = new List<GameObject>();
     private List<GameObject> walls = new List<GameObject>();
+    private List<GameObject> stairs = new List<GameObject>();
     private List<DungeonRoomStruct> safePath = new List<DungeonRoomStruct>();
 
     void Awake()
@@ -61,8 +62,8 @@ public class DungeonCreator : MonoBehaviour
 
                 if (FindIndexWithTreshold(this.emptyRooms, newPosition, distanceTreshold) < 0)
                 {
-                    float oddCornersAngle = !isOddCorner ? 0 : currentRoom.rotation.eulerAngles.z % currentRoom.type.cornerAngle == 0 ? halfCornerAngle : 0;
-                    DungeonRoomStruct newRoom = new DungeonRoomStruct(newPosition, Quaternion.Euler(new Vector3(0, 0, oddCornersAngle)), roomType);
+                    float safePathRoomAngle = CalculateAngle(newPosition, currentRoom.position);
+                    DungeonRoomStruct newRoom = new DungeonRoomStruct(newPosition, Quaternion.Euler(new Vector3(0, 0, -safePathRoomAngle)), roomType);
                     this.emptyRooms.Add(newRoom);
                     this.safePath.Add(newRoom);
                     break;
@@ -85,8 +86,8 @@ public class DungeonCreator : MonoBehaviour
 
                 if (FindIndexWithTreshold(this.emptyRooms, newPosition, distanceTreshold) < 0)
                 {
-                    float oddCornersAngle = !isOddCorner ? 0 : safePathLastRoom.rotation.eulerAngles.z % safePathLastRoom.type.cornerAngle == 0 ? halfCornerAngle : 0;
-                    DungeonRoomStruct newRoom = new DungeonRoomStruct(newPosition, Quaternion.Euler(new Vector3(0, 0, oddCornersAngle)), roomType);
+                    float endingRoomAngle = CalculateAngle(newPosition, safePathLastRoom.position);
+                    DungeonRoomStruct newRoom = new DungeonRoomStruct(newPosition, Quaternion.Euler(new Vector3(0, 0, -endingRoomAngle)), roomType);
                     this.emptyRooms.Add(newRoom);
                     this.endingRoom = newRoom;
                     endingRoomCreated = true;
@@ -111,8 +112,6 @@ public class DungeonCreator : MonoBehaviour
 
             for (int j = 0; j < iLoopRooms.Count; j++)
             {
-                float oddCornersAngle = !isOddCorner ? 0 : iLoopRooms[j].rotation.eulerAngles.z % iLoopRooms[j].type.cornerAngle == 0 ? halfCornerAngle : 0;
-
                 for (int k = 0; k < roomType.cornersCount; k++)
                 {
                     float currentAngle = k * iLoopRooms[j].type.cornerAngle;
@@ -120,7 +119,8 @@ public class DungeonCreator : MonoBehaviour
 
                     if (FindIndexWithTreshold(this.emptyRooms, newPosition, distanceTreshold) < 0)
                     {
-                        DungeonRoomStruct newEmptyRoom = new DungeonRoomStruct(newPosition, Quaternion.Euler(new Vector3(0, 0, oddCornersAngle)), roomType);
+                        float otherRoomAngle = CalculateAngle(newPosition, iLoopRooms[j].position);
+                        DungeonRoomStruct newEmptyRoom = new DungeonRoomStruct(newPosition, Quaternion.Euler(new Vector3(0, 0, -otherRoomAngle)), roomType);
                         newRooms.Add(newEmptyRoom);
                         emptyRooms.Add(newEmptyRoom);
                         otherRooms.Add(newEmptyRoom);
@@ -148,10 +148,15 @@ public class DungeonCreator : MonoBehaviour
 
     private void BuildDungeon()
     {
-        // Instantiate and add floors to list
+        // Build floors and stairs
         foreach (DungeonRoomStruct room in emptyRooms)
         {
             floors.Add(Instantiate(room.type.floor, new Vector3(room.position.x, room.position.y, room.position.z + room.type.wall.transform.localScale.z / 2f), room.rotation));
+
+            if (room.Equals(endingRoom))
+            {
+                BuildStairs(endingRoom);
+            }
         }
 
         /* Just color starting room on green, ending room on red, safe path on yellow, delete later */
@@ -180,24 +185,18 @@ public class DungeonCreator : MonoBehaviour
         Debug.Log("extremeRooms = " + extremeRooms.Count);
         Debug.Log("notExtremeRooms = " + notExtremeRooms.Count);
 
-        // Build walls at the extreme positions of rooms except ending room
+        // Build walls at the extreme positions of rooms and ending room
         float distanceTreshold = roomType.diameter * 0.1f;
 
         foreach (DungeonRoomStruct room in extremeRooms)
         {
-            if (room.Equals(endingRoom))
-            {
-                continue;
-            }
-
-            int angle;
             for (int i = 0; i < roomType.cornersCount; i++)
             {
                 Vector3 newPosition = CalculateNextPosition(room, i * room.type.cornerAngle);
 
                 if (FindIndexWithTreshold(emptyRooms, newPosition, distanceTreshold) < 0)
                 {
-                    angle = (int)CalculateAngle(room.position, newPosition);
+                    float angle = CalculateAngle(room.position, newPosition);
                     walls.Add(Instantiate(roomType.wall, CalculateNextPosition(room, i * room.type.cornerAngle, room.type.diameter / 2f), Quaternion.Euler(new Vector3(0, 0, -angle))));
                 }
             }
@@ -245,6 +244,35 @@ public class DungeonCreator : MonoBehaviour
             instantiableWallPositions.RemoveAt(index);
             instantiableWallAngles.RemoveAt(index);
         }*/
+    }
+
+    private void BuildStairs(DungeonRoomStruct room)
+    {
+        GameObject stairs = new GameObject("Stairs");
+        stairs.transform.position = room.position;
+        stairs.transform.Rotate(new Vector3(0, 0, room.rotation.eulerAngles.z + 180));
+        float stairsRotation = stairs.transform.rotation.eulerAngles.z;
+        Vector3 stairsStartPosition = new Vector3(room.position.x + Mathf.Sin(Mathf.Deg2Rad * -(stairsRotation + 180)) * room.type.diameter / 2f,
+                                                room.position.y + Mathf.Cos(Mathf.Deg2Rad * -(stairsRotation + 180)) * room.type.diameter / 2f,
+                                                room.position.z + room.type.wall.transform.localScale.z / 2f);
+        float nStairsToInstantiate = 10f;
+        float stairLength = room.type.diameter / nStairsToInstantiate;
+        float halfStairLength = room.type.stair.transform.localScale.y / 2f;
+        float stairHeight = room.type.wall.transform.localScale.z / nStairsToInstantiate;
+        float sinX = Mathf.Sin(Mathf.Deg2Rad * -stairsRotation);
+        float cosY = Mathf.Cos(Mathf.Deg2Rad * -stairsRotation);
+
+        for (int i = 1; i < nStairsToInstantiate; i++)
+        {
+            float stairDistance = stairLength * i;
+            Vector3 stairPosition = new Vector3(stairsStartPosition.x + sinX * stairDistance + sinX * halfStairLength,
+                                                stairsStartPosition.y + cosY * stairDistance + cosY * halfStairLength,
+                                                stairsStartPosition.z - stairHeight * i);
+            GameObject stair = Instantiate(room.type.stair, stairPosition, Quaternion.Euler(0, 0, stairs.transform.rotation.eulerAngles.z));
+            stair.transform.parent = stairs.transform;
+        }
+
+        this.stairs.Add(stairs);
     }
 
     private Vector3 CalculateNextPosition(DungeonRoomStruct room, float rotationAngle)
