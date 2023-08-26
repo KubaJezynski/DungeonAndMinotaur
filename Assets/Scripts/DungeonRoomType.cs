@@ -18,7 +18,7 @@ public class DungeonRoomType : MonoBehaviour
 
     void Awake()
     {
-        Create(FloorType.QUADRANGULAR, SIDE_LENGTH);
+        Create(FloorType.HEXAGONAL, SIDE_LENGTH);
     }
 
     private void Create(FloorType floorType, int sideLength)

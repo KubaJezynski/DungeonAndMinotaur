@@ -38,7 +38,7 @@ public class DungeonCreator : MonoBehaviour
     // Create rooms structs
     private void CreateSpace(int size, DungeonRoomType roomType)
     {
-        int safePathStepsCount = Random.Range(size, size * 2);
+        int safePathStepsCount = Random.Range(size * size / 2, size * size);
         float distanceTreshold = roomType.diameter * 0.99f;
         float halfCornerAngle = roomType.cornerAngle / 2f;
         bool isOddCorner = roomType.cornersCount % 2 == 0 ? false : true;
@@ -48,10 +48,12 @@ public class DungeonCreator : MonoBehaviour
         this.emptyRooms.Add(startingRoom);
 
         // Safe path rooms
+        float baseAngle = roomType.cornerAngle * Random.Range(0, roomType.cornersCount);
+
         for (int i = 0; i < safePathStepsCount; i++)
         {
             DungeonRoomStruct currentRoom = emptyRooms[emptyRooms.Count - 1];
-            float currentAngle = roomType.cornerAngle * Random.Range(0, roomType.cornersCount);
+            float currentAngle = baseAngle + roomType.cornerAngle * Random.Range(0, roomType.cornersCount - 1);
 
             for (int j = 0; j < currentRoom.type.cornersCount; j++)
             {
@@ -66,7 +68,7 @@ public class DungeonCreator : MonoBehaviour
                     break;
                 }
 
-                currentAngle += currentRoom.type.cornerAngle;
+                currentAngle = -currentAngle;
             }
         }
 
@@ -179,6 +181,8 @@ public class DungeonCreator : MonoBehaviour
         Debug.Log("notExtremeRooms = " + notExtremeRooms.Count);
 
         // Build walls at the extreme positions of rooms except ending room
+        float distanceTreshold = roomType.diameter * 0.1f;
+
         foreach (DungeonRoomStruct room in extremeRooms)
         {
             if (room.Equals(endingRoom))
@@ -191,7 +195,7 @@ public class DungeonCreator : MonoBehaviour
             {
                 Vector3 newPosition = CalculateNextPosition(room, i * room.type.cornerAngle);
 
-                if (!System.Array.Exists(emptyRooms.ToArray(), room => room.position == newPosition))
+                if (FindIndexWithTreshold(emptyRooms, newPosition, distanceTreshold) < 0)
                 {
                     angle = (int)CalculateAngle(room.position, newPosition);
                     walls.Add(Instantiate(roomType.wall, CalculateNextPosition(room, i * room.type.cornerAngle, room.type.diameter / 2f), Quaternion.Euler(new Vector3(0, 0, -angle))));
@@ -325,11 +329,13 @@ public class DungeonCreator : MonoBehaviour
 
     private bool IsExtremeRoom(DungeonRoomStruct room)
     {
+        float distanceTreshold = room.type.diameter * 0.1f;
+
         for (int i = 0; i < room.type.cornersCount; i++)
         {
             Vector3 newPosition = CalculateNextPosition(room, i * room.type.cornerAngle);
 
-            if (!System.Array.Exists(emptyRooms.ToArray(), emptyRoom => emptyRoom.position == newPosition))
+            if (FindIndexWithTreshold(emptyRooms, newPosition, distanceTreshold) < 0)
             {
                 return true;
             }
