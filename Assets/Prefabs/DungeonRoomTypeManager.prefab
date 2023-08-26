@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5286855268482506209
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 53194603935882717}
+  - component: {fileID: 7171024193375236934}
+  m_Layer: 0
+  m_Name: DungeonRoomTypeManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &53194603935882717
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5286855268482506209}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7171024193375236934
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5286855268482506209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88a096f6aa4a4c14fa12f26004a04465, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  stairPrefab: {fileID: 919132149155446097, guid: d8896bad805a8074c8930738d1e2d35c, type: 3}
+  wallPrefab: {fileID: 1532014571330522353, guid: 7ae56b2831c770e488186d4614b848c2, type: 3}
+  floorTriangularPrefab: {fileID: 919132149155446097, guid: 7eaa78630fe07f842bd80514f02963ad, type: 3}
+  floorQuadrangularPrefab: {fileID: 1665968620792745384, guid: 85f3a9bf3616a504d8d9b54ac589833a, type: 3}
+  floorPentagonalPrefab: {fileID: 919132149155446097, guid: 0c37dd089790b504e899918a70575adf, type: 3}
+  floorHexagonalPrefab: {fileID: 919132149155446097, guid: 8c42c712c7bee694b9f652cf19a044f1, type: 3}
+  floorHeptagonalPrefab: {fileID: 919132149155446097, guid: 731d775556d4ba047ad4849ca45c6926, type: 3}
+  floorOctagonalPrefab: {fileID: 919132149155446097, guid: e25e213f328500841a56e9225a6a8c3a, type: 3}
