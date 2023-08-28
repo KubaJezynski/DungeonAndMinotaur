@@ -202,48 +202,7 @@ public class DungeonCreator : MonoBehaviour
             }
         }
 
-        // Create list of positions where wall can be instantiate
-        /*List<Vector3> notInstantiableWallPositions = new List<Vector3>();
-        List<Vector3> instantiableWallPositions = new List<Vector3>();
-        List<float> instantiableWallAngles = new List<float>();
-        walls.ForEach(wall => notInstantiableWallPositions.Add(wall.transform.position));
-
-        for (int i = 0; i < safePath.Count - 1; i++)
-        {
-            DungeonRoomStruct currentRoom = safePath[i];
-            Vector3 currentPosition = currentRoom.position;
-            float newAngle = CalculateAngle(currentPosition, safePath[i + 1].position);
-            Vector3 newPosition = new Vector3(currentPosition.x + Mathf.Sin(Mathf.Deg2Rad * newAngle) * currentRoom.type.diameter / 2f,
-                                            currentPosition.y + Mathf.Cos(Mathf.Deg2Rad * newAngle) * currentRoom.type.diameter / 2f,
-                                            currentPosition.z);
-            notInstantiableWallPositions.Add(newPosition);
-        }
-
-        foreach (DungeonRoomStruct room in emptyRooms)
-        {
-            for (int i = 0; i < room.type.cornersCount; i++)
-            {
-                Vector3 nextWallPosition = CalculateNextPosition(room, i * room.type.cornerAngle, room.type.diameter / 2f);
-
-                if (!ContainsWithTreshold(notInstantiableWallPositions, nextWallPosition, room.type.diameter / 10f))
-                {
-                    instantiableWallPositions.Add(nextWallPosition);
-                    instantiableWallAngles.Add(CalculateAngle(room.position, nextWallPosition));
-                }
-            }
-        }*/
-
-        // Instantiate walls randomly and add to walls list
-        /*int nWalls = Random.Range(emptyRooms.Count / 4, emptyRooms.Count / 3);
-
-        for (int i = 0; i < nWalls; i++)
-        {
-            int index = Random.Range(0, instantiableWallPositions.Count);
-            Vector3 wallPosition = instantiableWallPositions[index];
-            walls.Add(Instantiate(roomType.wall, wallPosition, Quaternion.Euler(new Vector3(0, 0, -instantiableWallAngles[index]))));
-            instantiableWallPositions.RemoveAt(index);
-            instantiableWallAngles.RemoveAt(index);
-        }*/
+        DungeonCreatedCallback();
     }
 
     private void BuildStairs(DungeonRoomStruct room)
@@ -273,6 +232,16 @@ public class DungeonCreator : MonoBehaviour
         }
 
         this.stairs.Add(stairs);
+    }
+
+    private void DungeonCreatedCallback()
+    {
+        GameObject gameManager = GameObject.FindWithTag("GameManager");
+
+        if (gameManager != null)
+        {
+            gameManager.GetComponent<GameManager>().dungeonCreatedEvent = (GameObject player) => Instantiate(player, startingRoom.position, Quaternion.identity);
+        }
     }
 
     private Vector3 CalculateNextPosition(DungeonRoomStruct room, float rotationAngle)
