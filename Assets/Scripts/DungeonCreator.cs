@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using CustomMath;
 using UnityEngine;
 
 public class DungeonCreator : MonoBehaviour
@@ -62,7 +63,7 @@ public class DungeonCreator : MonoBehaviour
 
                 if (FindIndexWithTreshold(this.emptyRooms, newPosition, distanceTreshold) < 0)
                 {
-                    float safePathRoomAngle = CalculateAngle(newPosition, currentRoom.position);
+                    float safePathRoomAngle = MathFunctions.CalculateAngle(newPosition, currentRoom.position);
                     DungeonRoomStruct newRoom = new DungeonRoomStruct(newPosition, Quaternion.Euler(new Vector3(0, 0, -safePathRoomAngle)), roomType);
                     this.emptyRooms.Add(newRoom);
                     this.safePath.Add(newRoom);
@@ -86,7 +87,7 @@ public class DungeonCreator : MonoBehaviour
 
                 if (FindIndexWithTreshold(this.emptyRooms, newPosition, distanceTreshold) < 0)
                 {
-                    float endingRoomAngle = CalculateAngle(newPosition, safePathLastRoom.position);
+                    float endingRoomAngle = MathFunctions.CalculateAngle(newPosition, safePathLastRoom.position);
                     DungeonRoomStruct newRoom = new DungeonRoomStruct(newPosition, Quaternion.Euler(new Vector3(0, 0, -endingRoomAngle)), roomType);
                     this.emptyRooms.Add(newRoom);
                     this.endingRoom = newRoom;
@@ -119,7 +120,7 @@ public class DungeonCreator : MonoBehaviour
 
                     if (FindIndexWithTreshold(this.emptyRooms, newPosition, distanceTreshold) < 0)
                     {
-                        float otherRoomAngle = CalculateAngle(newPosition, iLoopRooms[j].position);
+                        float otherRoomAngle = MathFunctions.CalculateAngle(newPosition, iLoopRooms[j].position);
                         DungeonRoomStruct newEmptyRoom = new DungeonRoomStruct(newPosition, Quaternion.Euler(new Vector3(0, 0, -otherRoomAngle)), roomType);
                         newRooms.Add(newEmptyRoom);
                         emptyRooms.Add(newEmptyRoom);
@@ -196,7 +197,7 @@ public class DungeonCreator : MonoBehaviour
 
                 if (FindIndexWithTreshold(emptyRooms, newPosition, distanceTreshold) < 0)
                 {
-                    float angle = CalculateAngle(room.position, newPosition);
+                    float angle = MathFunctions.CalculateAngle(room.position, newPosition);
                     walls.Add(Instantiate(roomType.wall, CalculateNextPosition(room, i * room.type.cornerAngle, room.type.diameter / 2f), Quaternion.Euler(new Vector3(0, 0, -angle))));
                 }
             }
@@ -256,14 +257,6 @@ public class DungeonCreator : MonoBehaviour
                             room.position.z);
     }
 
-    private static float CalculateAngle(Vector2 p1, Vector2 p2)
-    {
-        float y = p2.y - p1.y;
-        float x = p2.x - p1.x;
-
-        return Mathf.Atan2(x, y) * Mathf.Rad2Deg;
-    }
-
     private float CalculateNearestAngle(float angle, DungeonRoomStruct room)
     {
         List<Vector3> emptyRoomsPositions = new List<Vector3>();
@@ -277,7 +270,7 @@ public class DungeonCreator : MonoBehaviour
 
             if (ContainsWithTreshold(emptyRoomsPositions, newPosition, room.type.diameter / 10f))
             {
-                float newAngle = CalculateAngle(room.position, newPosition);
+                float newAngle = MathFunctions.CalculateAngle(room.position, newPosition);
                 float newAngleDifference = Mathf.Abs(angle - newAngle);
 
                 if (newAngleDifference < angleDifference)
@@ -293,7 +286,7 @@ public class DungeonCreator : MonoBehaviour
 
     private DungeonRoomStruct CalculateNextRoom(DungeonRoomStruct startingRoom, DungeonRoomStruct endingRoom)
     {
-        float turnAroundAngle = CalculateAngle(startingRoom.position, endingRoom.position);
+        float turnAroundAngle = MathFunctions.CalculateAngle(startingRoom.position, endingRoom.position);
         turnAroundAngle = CalculateNearestAngle(turnAroundAngle, startingRoom);
         Vector3 nextRoomPosition = new Vector3(startingRoom.position.x + Mathf.Sin(Mathf.Deg2Rad * turnAroundAngle) * startingRoom.type.diameter,
                                                 startingRoom.position.y + Mathf.Cos(Mathf.Deg2Rad * turnAroundAngle) * startingRoom.type.diameter,
