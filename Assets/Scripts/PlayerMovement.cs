@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    public const float TRANSLATION_SPEED = 5.0f;
+    private const float TRANSLATION_SPEED = 5.0f;
 
     // Start is called before the first frame update
     void Start()
@@ -22,9 +22,7 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        Vector3 position = new Vector3(transform.position.x + translationX,
-                                transform.position.y + translationY,
-                                transform.position.z);
+        Vector3 position = new Vector3(transform.position.x + translationX, transform.position.y + translationY, transform.position.z);
         float targetAngle = MathFunctions.CalculateAngle(Vector2.zero, new Vector2(translationX, translationY));
 
         this.transform.SetPositionAndRotation(position, Quaternion.Euler(0, 0, -targetAngle));
