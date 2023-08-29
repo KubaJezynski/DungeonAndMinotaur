@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 2
   tags:
   - GameManager
+  - Stair
+  - Floor
   layers:
   - Default
   - TransparentFX
