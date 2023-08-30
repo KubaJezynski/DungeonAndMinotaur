@@ -252,9 +252,7 @@ public class DungeonCreator : MonoBehaviour
 
     private Vector3 CalculateNextPosition(DungeonRoomStruct room, float rotationAngle, float distance)
     {
-        return new Vector3(room.position.x + Mathf.Sin(Mathf.Deg2Rad * (rotationAngle + room.rotation.eulerAngles.z)) * distance,
-                            room.position.y + Mathf.Cos(Mathf.Deg2Rad * (rotationAngle + room.rotation.eulerAngles.z)) * distance,
-                            room.position.z);
+        return MathFunctions.CalculateNewPosition(room.position, rotationAngle + room.rotation.eulerAngles.z, distance);
     }
 
     private float CalculateNearestAngle(float angle, DungeonRoomStruct room)
