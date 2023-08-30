@@ -14,5 +14,23 @@ namespace CustomMath
 
             return Mathf.Atan2(x, y) * Mathf.Rad2Deg;
         }
+
+        //
+        // Summary:
+        //     Return new position from position.
+        //
+        // Parameters:
+        //   position:
+        //     position from which new position will be calculated.
+        //   translationAngle:
+        //     world angle in which new position is to be calculated (-180 to 180).
+        //   distance:
+        //     how far new position should be calculated.
+        public static Vector3 CalculateNewPosition(Vector3 position, float translationAngle, float distance)
+        {
+            return new Vector3(position.x + Mathf.Sin(Mathf.Deg2Rad * translationAngle) * distance,
+                                position.y + Mathf.Cos(Mathf.Deg2Rad * translationAngle) * distance,
+                                position.z);
+        }
     }
 }
