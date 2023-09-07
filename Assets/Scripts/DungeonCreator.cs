@@ -12,10 +12,11 @@ public class DungeonCreator : MonoBehaviour
     private DungeonRoomStruct startingRoom = new DungeonRoomStruct();
     private DungeonRoomStruct endingRoom = new DungeonRoomStruct();
     private List<DungeonRoomStruct> emptyRooms = new List<DungeonRoomStruct>();
+    private List<DungeonRoomStruct> safeRooms = new List<DungeonRoomStruct>();
+    private List<DungeonRoomStruct> otherRooms = new List<DungeonRoomStruct>();
     private List<GameObject> floors = new List<GameObject>();
     private List<GameObject> walls = new List<GameObject>();
     private List<GameObject> stairs = new List<GameObject>();
-    private List<DungeonRoomStruct> safePath = new List<DungeonRoomStruct>();
 
     void Awake()
     {
@@ -66,7 +67,7 @@ public class DungeonCreator : MonoBehaviour
                     float safePathRoomAngle = MathFunctions.CalculateAngle(newPosition, currentRoom.position);
                     DungeonRoomStruct newRoom = new DungeonRoomStruct(newPosition, Quaternion.Euler(new Vector3(0, 0, -safePathRoomAngle)), roomType);
                     this.emptyRooms.Add(newRoom);
-                    this.safePath.Add(newRoom);
+                    this.safeRooms.Add(newRoom);
                     break;
                 }
 
@@ -75,10 +76,10 @@ public class DungeonCreator : MonoBehaviour
         }
 
         // Ending room
-        for (int i = 0; i < safePath.Count; i++)
+        for (int i = 0; i < safeRooms.Count; i++)
         {
             bool endingRoomCreated = false;
-            DungeonRoomStruct safePathLastRoom = safePath[safePath.Count - 1 - i];
+            DungeonRoomStruct safePathLastRoom = safeRooms[safeRooms.Count - 1 - i];
 
             for (int j = 0; j < safePathLastRoom.type.cornersCount; j++)
             {
@@ -104,7 +105,6 @@ public class DungeonCreator : MonoBehaviour
 
         // Other rooms
         List<DungeonRoomStruct> iLoopRooms = new List<DungeonRoomStruct>();
-        List<DungeonRoomStruct> otherRooms = new List<DungeonRoomStruct>();
         emptyRooms.ForEach(room => iLoopRooms.Add(room));
 
         for (int i = 0; i < size; i++)
@@ -143,6 +143,7 @@ public class DungeonCreator : MonoBehaviour
             if (!(index < 0))
             {
                 emptyRooms.RemoveAt(index);
+                otherRooms.Remove(otherRoom);
             }
         }
     }
@@ -171,7 +172,7 @@ public class DungeonCreator : MonoBehaviour
             {
                 floor.GetComponent<Renderer>().material.color = new Color(255, 0, 0);
             }
-            else if (!(FindIndexWithTreshold(safePath, floor.transform.position, roomType.diameter * 0.99f) < 0))
+            else if (!(FindIndexWithTreshold(safeRooms, floor.transform.position, roomType.diameter * 0.99f) < 0))
             {
                 floor.GetComponent<Renderer>().material.color = new Color(255, 255, 0);
             }
