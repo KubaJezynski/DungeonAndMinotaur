@@ -359,7 +359,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ce8cfdfc3a712749bf89ecf1ba84ba5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dungeonRoomTypePrefab: {fileID: 5286855268482506209, guid: ceff07e6b954f0f438656a136c5a9b64, type: 3}
+  dungeonRoomTypeManagerPrefab: {fileID: 5286855268482506209, guid: ceff07e6b954f0f438656a136c5a9b64, type: 3}
+  trapTypeManagerPrefab: {fileID: 2089027145061467473, guid: c687b5fd681490e4aa0947110fe194f6, type: 3}
 --- !u!4 &806775998
 Transform:
   m_ObjectHideFlags: 0

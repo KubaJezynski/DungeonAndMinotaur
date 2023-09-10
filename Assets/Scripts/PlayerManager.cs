@@ -10,6 +10,7 @@ public class PlayerManager : MonoBehaviour
     [SerializeField] private GameObject camera;
     [SerializeField] private GameObject canvas;
 
+    public System.Func<int> takeDamageEvent { private get; set; }
     private int health = MAX_HEALTH;
     public int Health { get { return health; } }
     private int energy = MAX_ENERGY;
@@ -26,6 +27,7 @@ public class PlayerManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        UpdateHealth();
         UpdateEnergy();
     }
 
@@ -38,6 +40,15 @@ public class PlayerManager : MonoBehaviour
         else if (Input.GetKeyUp(KeyCode.LeftShift))
         {
             this.gameObject.GetComponent<PlayerMovement>().sprintEvent = () => { if (RenewalEnergy()) this.gameObject.GetComponent<PlayerMovement>().sprintEvent = () => false; return false; };
+        }
+    }
+
+    private void UpdateHealth()
+    {
+        if (takeDamageEvent != null)
+        {
+            health -= takeDamageEvent.Invoke();
+            takeDamageEvent = null;
         }
     }
 
