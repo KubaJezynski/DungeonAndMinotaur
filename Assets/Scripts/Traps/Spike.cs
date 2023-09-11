@@ -3,7 +3,7 @@ using UnityEngine;
 public class Spike : MonoBehaviour
 {
     private static float SPEED = 0.1f;
-    private static int DAMAGE = 20;
+    private static int DAMAGE = 12;
 
     private SpikeState state = SpikeState.IDLE;
     public SpikeState State

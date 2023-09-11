@@ -46,3 +46,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   trapArrowsPrefab: {fileID: 261998747821347322, guid: e69bbe53eff3649409236e31ea0cadc8, type: 3}
   trapSpikesPrefab: {fileID: 4866940040056974746, guid: e3c7006c04452da45a0ea17dfb6ad842, type: 3}
+  trapChopperPrefab: {fileID: 8508582209793265572, guid: eb9193592f1c0ae438f6083b3079c1cc, type: 3}

@@ -3,7 +3,7 @@ using UnityEngine;
 public class Arrow : MonoBehaviour
 {
     private static int SPEED = 25;
-    private static int DAMAGE = 20;
+    private static int DAMAGE = 10;
 
     private Vector3 startingPosition;
     private float capsuleColliderHeight;

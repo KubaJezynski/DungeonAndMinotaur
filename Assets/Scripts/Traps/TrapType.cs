@@ -5,6 +5,7 @@ public class TrapType : MonoBehaviour
 {
     [SerializeField] private GameObject trapArrowsPrefab;
     [SerializeField] private GameObject trapSpikesPrefab;
+    [SerializeField] private GameObject trapChopperPrefab;
 
     public GameObject trap { get; private set; }
 
@@ -22,6 +23,9 @@ public class TrapType : MonoBehaviour
                 break;
             case Type.SPIKES:
                 SetTrap(trapSpikesPrefab);
+                break;
+            case Type.CHOPPER:
+                SetTrap(trapChopperPrefab);
                 break;
         }
     }
@@ -89,7 +93,8 @@ public class TrapType : MonoBehaviour
     public enum Type
     {
         ARROWS,
-        SPIKES
+        SPIKES,
+        CHOPPER
     }
 
     public enum TrapLocation
