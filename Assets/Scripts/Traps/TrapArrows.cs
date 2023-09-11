@@ -9,41 +9,12 @@ public class TrapArrows : AbstractTrap
     [SerializeField] private GameObject arrow;
 
     private List<GameObject> arrowSpawns = new List<GameObject>();
-    private bool canActivate = true;
-    private bool waitToActivate = false;
+    private TrapArrowsState trapArrowsState = TrapArrowsState.READY;
 
     void Awake()
     {
         Init(3, 0.4f, 2, 3);
-        arrowSpawns = CalculateArrowSpawns(ARROW_POSITION_DISTANCE);
-    }
-
-    private List<GameObject> CalculateArrowSpawns(float distance)
-    {
-        List<GameObject> arrowSpawns = new List<GameObject>();
-        float length = this.transform.localScale.z;
-        int positionsCount = (int)(length / distance);
-        distance = length / (positionsCount + 1);
-        float rotation = this.transform.rotation.eulerAngles.z;
-        Vector3 startingPosition = new Vector3(this.transform.position.x + Mathf.Cos(Mathf.Deg2Rad * -rotation) * this.transform.localScale.x / 2f,
-                                                this.transform.position.y + Mathf.Sin(Mathf.Deg2Rad * -rotation) * this.transform.localScale.x / 2f,
-                                                this.transform.position.z - this.transform.localScale.z / 2f);
-
-        for (int i = 0; i < positionsCount; i++)
-        {
-            for (int j = 0; j < positionsCount; j++)
-            {
-                GameObject arrowSpawn = new GameObject();
-                float cosX = Mathf.Cos(Mathf.Deg2Rad * -rotation) * distance * (j + 1);
-                float sinY = Mathf.Sin(Mathf.Deg2Rad * -rotation) * distance * (j + 1);
-                arrowSpawn.transform.position = new Vector3(startingPosition.x - cosX, startingPosition.y - sinY, startingPosition.z + distance * (i + 1));
-                arrowSpawn.transform.rotation = this.transform.rotation;
-                arrowSpawn.transform.parent = this.transform;
-                arrowSpawns.Add(arrowSpawn);
-            }
-        }
-
-        return arrowSpawns;
+        arrowSpawns = CalculateSpawns(ARROW_POSITION_DISTANCE);
     }
 
     private List<Vector3> Shuffle(List<Vector3> list)
@@ -64,11 +35,11 @@ public class TrapArrows : AbstractTrap
         return shuffledList;
     }
 
-    protected override IEnumerator OnActivated()
+    protected override IEnumerator InAction()
     {
-        if (canActivate)
+        if (trapArrowsState == TrapArrowsState.READY)
         {
-            canActivate = false;
+            trapArrowsState = TrapArrowsState.NOT_READY;
             List<Vector3> shuffledArrowsPositions = new List<Vector3>();
             arrowSpawns.ForEach(arrowSpawn => shuffledArrowsPositions.Add(arrowSpawn.transform.position));
             shuffledArrowsPositions = Shuffle(shuffledArrowsPositions);
@@ -79,13 +50,23 @@ public class TrapArrows : AbstractTrap
                 yield return new WaitForSeconds(0.01f);
             }
         }
-
-        if (!canActivate && !waitToActivate)
+        else if (trapArrowsState == TrapArrowsState.NOT_READY)
         {
-            waitToActivate = true;
+            trapArrowsState = TrapArrowsState.RELOADING;
             yield return new WaitForSeconds(1.5f);
-            waitToActivate = false;
-            canActivate = true;
+            trapArrowsState = TrapArrowsState.READY;
         }
+    }
+
+    protected override IEnumerator AfterAction()
+    {
+        yield return 0;
+    }
+
+    private enum TrapArrowsState
+    {
+        READY,
+        RELOADING,
+        NOT_READY
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public abstract class AbstractTrap : MonoBehaviour
@@ -19,7 +20,7 @@ public abstract class AbstractTrap : MonoBehaviour
     {
         if (state == State.IN_ACTION)
         {
-            StartCoroutine(OnActivated());
+            StartCoroutine(InAction());
         }
     }
 
@@ -43,7 +44,8 @@ public abstract class AbstractTrap : MonoBehaviour
         this.amountOfUse = amountOfUse;
     }
 
-    protected abstract IEnumerator OnActivated();
+    protected abstract IEnumerator InAction();
+    protected abstract IEnumerator AfterAction();
 
     private IEnumerator ActivateTrap(float delay)
     {
@@ -55,12 +57,41 @@ public abstract class AbstractTrap : MonoBehaviour
     {
         yield return new WaitForSeconds(duration);
         state = State.AFTER_ACTION;
+        StartCoroutine(AfterAction());
     }
 
     private IEnumerator TrapAfterAction(float cooldown)
     {
         yield return new WaitForSeconds(cooldown);
         state = State.READY;
+    }
+
+    protected List<GameObject> CalculateSpawns(float distance)
+    {
+        List<GameObject> arrowSpawns = new List<GameObject>();
+        float length = this.transform.localScale.z;
+        int positionsCount = (int)(length / distance);
+        distance = length / (positionsCount + 1);
+        float rotation = this.transform.rotation.eulerAngles.z;
+        Vector3 startingPosition = new Vector3(this.transform.position.x + Mathf.Cos(Mathf.Deg2Rad * -rotation) * this.transform.localScale.x / 2f,
+                                                this.transform.position.y + Mathf.Sin(Mathf.Deg2Rad * -rotation) * this.transform.localScale.x / 2f,
+                                                this.transform.position.z - this.transform.localScale.z / 2f);
+
+        for (int i = 0; i < positionsCount; i++)
+        {
+            for (int j = 0; j < positionsCount; j++)
+            {
+                GameObject arrowSpawn = new GameObject();
+                float cosX = Mathf.Cos(Mathf.Deg2Rad * -rotation) * distance * (j + 1);
+                float sinY = Mathf.Sin(Mathf.Deg2Rad * -rotation) * distance * (j + 1);
+                arrowSpawn.transform.position = new Vector3(startingPosition.x - cosX, startingPosition.y - sinY, startingPosition.z + distance * (i + 1));
+                arrowSpawn.transform.rotation = this.transform.rotation;
+                arrowSpawn.transform.parent = this.transform;
+                arrowSpawns.Add(arrowSpawn);
+            }
+        }
+
+        return arrowSpawns;
     }
 
     private enum State

@@ -4,6 +4,7 @@ using UnityEngine;
 public class TrapType : MonoBehaviour
 {
     [SerializeField] private GameObject trapArrowsPrefab;
+    [SerializeField] private GameObject trapSpikesPrefab;
 
     public GameObject trap { get; private set; }
 
@@ -18,6 +19,9 @@ public class TrapType : MonoBehaviour
         {
             case Type.ARROWS:
                 SetTrap(trapArrowsPrefab);
+                break;
+            case Type.SPIKES:
+                SetTrap(trapSpikesPrefab);
                 break;
         }
     }
@@ -84,7 +88,8 @@ public class TrapType : MonoBehaviour
 
     public enum Type
     {
-        ARROWS
+        ARROWS,
+        SPIKES
     }
 
     public enum TrapLocation
