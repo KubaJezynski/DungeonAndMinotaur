@@ -6,20 +6,27 @@ public class DungeonCreator : MonoBehaviour
 {
     private const int DUNGEON_SIZE = 10;
 
-    [SerializeField] private GameObject dungeonRoomTypePrefab;
+    [SerializeField] private GameObject dungeonRoomTypeManagerPrefab;
+    [SerializeField] private GameObject trapTypeManagerPrefab;
 
     private DungeonRoomType roomType;
+    private TrapType trapType;
     private DungeonRoomStruct startingRoom = new DungeonRoomStruct();
     private DungeonRoomStruct endingRoom = new DungeonRoomStruct();
     private List<DungeonRoomStruct> emptyRooms = new List<DungeonRoomStruct>();
+    private List<DungeonRoomStruct> safeRooms = new List<DungeonRoomStruct>();
+    private List<DungeonRoomStruct> otherRooms = new List<DungeonRoomStruct>();
+    private List<DungeonRoomStruct> extremeRooms = new List<DungeonRoomStruct>();
+    private List<DungeonRoomStruct> notExtremeRooms = new List<DungeonRoomStruct>();
     private List<GameObject> floors = new List<GameObject>();
     private List<GameObject> walls = new List<GameObject>();
     private List<GameObject> stairs = new List<GameObject>();
-    private List<DungeonRoomStruct> safePath = new List<DungeonRoomStruct>();
+    private List<GameObject> traps = new List<GameObject>();
 
     void Awake()
     {
-        roomType = Instantiate(dungeonRoomTypePrefab).GetComponent<DungeonRoomType>();
+        roomType = Instantiate(dungeonRoomTypeManagerPrefab).GetComponent<DungeonRoomType>();
+        trapType = Instantiate(trapTypeManagerPrefab).GetComponent<TrapType>();
         CreateSpace(DUNGEON_SIZE, roomType);
 
         BuildDungeon();
@@ -59,14 +66,14 @@ public class DungeonCreator : MonoBehaviour
 
             for (int j = 0; j < currentRoom.type.cornersCount; j++)
             {
-                Vector3 newPosition = CalculateNextPosition(currentRoom, currentAngle);
+                Vector3 newPosition = MathFunctions.CalculateNewPosition(currentRoom, currentAngle, currentRoom.type.diameter);
 
-                if (FindIndexWithTreshold(this.emptyRooms, newPosition, distanceTreshold) < 0)
+                if (MathFunctions.FindIndexWithTreshold(this.emptyRooms, newPosition, distanceTreshold) < 0)
                 {
                     float safePathRoomAngle = MathFunctions.CalculateAngle(newPosition, currentRoom.position);
                     DungeonRoomStruct newRoom = new DungeonRoomStruct(newPosition, Quaternion.Euler(new Vector3(0, 0, -safePathRoomAngle)), roomType);
                     this.emptyRooms.Add(newRoom);
-                    this.safePath.Add(newRoom);
+                    this.safeRooms.Add(newRoom);
                     break;
                 }
 
@@ -75,17 +82,17 @@ public class DungeonCreator : MonoBehaviour
         }
 
         // Ending room
-        for (int i = 0; i < safePath.Count; i++)
+        for (int i = 0; i < safeRooms.Count; i++)
         {
             bool endingRoomCreated = false;
-            DungeonRoomStruct safePathLastRoom = safePath[safePath.Count - 1 - i];
+            DungeonRoomStruct safePathLastRoom = safeRooms[safeRooms.Count - 1 - i];
 
             for (int j = 0; j < safePathLastRoom.type.cornersCount; j++)
             {
                 float currentAngle = safePathLastRoom.type.cornerAngle * j;
-                Vector3 newPosition = CalculateNextPosition(safePathLastRoom, currentAngle);
+                Vector3 newPosition = MathFunctions.CalculateNewPosition(safePathLastRoom, currentAngle, safePathLastRoom.type.diameter);
 
-                if (FindIndexWithTreshold(this.emptyRooms, newPosition, distanceTreshold) < 0)
+                if (MathFunctions.FindIndexWithTreshold(this.emptyRooms, newPosition, distanceTreshold) < 0)
                 {
                     float endingRoomAngle = MathFunctions.CalculateAngle(newPosition, safePathLastRoom.position);
                     DungeonRoomStruct newRoom = new DungeonRoomStruct(newPosition, Quaternion.Euler(new Vector3(0, 0, -endingRoomAngle)), roomType);
@@ -104,7 +111,6 @@ public class DungeonCreator : MonoBehaviour
 
         // Other rooms
         List<DungeonRoomStruct> iLoopRooms = new List<DungeonRoomStruct>();
-        List<DungeonRoomStruct> otherRooms = new List<DungeonRoomStruct>();
         emptyRooms.ForEach(room => iLoopRooms.Add(room));
 
         for (int i = 0; i < size; i++)
@@ -116,9 +122,9 @@ public class DungeonCreator : MonoBehaviour
                 for (int k = 0; k < roomType.cornersCount; k++)
                 {
                     float currentAngle = k * iLoopRooms[j].type.cornerAngle;
-                    Vector3 newPosition = CalculateNextPosition(iLoopRooms[j], currentAngle);
+                    Vector3 newPosition = MathFunctions.CalculateNewPosition(iLoopRooms[j], currentAngle, iLoopRooms[j].type.diameter);
 
-                    if (FindIndexWithTreshold(this.emptyRooms, newPosition, distanceTreshold) < 0)
+                    if (MathFunctions.FindIndexWithTreshold(this.emptyRooms, newPosition, distanceTreshold) < 0)
                     {
                         float otherRoomAngle = MathFunctions.CalculateAngle(newPosition, iLoopRooms[j].position);
                         DungeonRoomStruct newEmptyRoom = new DungeonRoomStruct(newPosition, Quaternion.Euler(new Vector3(0, 0, -otherRoomAngle)), roomType);
@@ -138,11 +144,12 @@ public class DungeonCreator : MonoBehaviour
         for (int i = 0; i < nRoomsToRemove; i++)
         {
             DungeonRoomStruct otherRoom = otherRooms[Random.Range(0, otherRooms.Count)];
-            int index = FindIndexWithTreshold(emptyRooms, otherRoom.position, distanceTreshold);
+            int index = MathFunctions.FindIndexWithTreshold(emptyRooms, otherRoom.position, distanceTreshold);
 
             if (!(index < 0))
             {
                 emptyRooms.RemoveAt(index);
+                otherRooms.Remove(otherRoom);
             }
         }
     }
@@ -153,12 +160,9 @@ public class DungeonCreator : MonoBehaviour
         foreach (DungeonRoomStruct room in emptyRooms)
         {
             floors.Add(Instantiate(room.type.floor, new Vector3(room.position.x, room.position.y, room.position.z + room.type.wall.transform.localScale.z / 2f), room.rotation));
-
-            if (room.Equals(endingRoom))
-            {
-                BuildStairs(endingRoom);
-            }
         }
+
+        BuildStairs(endingRoom);
 
         /* Just color starting room on green, ending room on red, safe path on yellow, delete later */
         foreach (GameObject floor in floors)
@@ -171,20 +175,15 @@ public class DungeonCreator : MonoBehaviour
             {
                 floor.GetComponent<Renderer>().material.color = new Color(255, 0, 0);
             }
-            else if (!(FindIndexWithTreshold(safePath, floor.transform.position, roomType.diameter * 0.99f) < 0))
+            else if (!(MathFunctions.FindIndexWithTreshold(safeRooms, floor.transform.position, roomType.diameter * 0.99f) < 0))
             {
                 floor.GetComponent<Renderer>().material.color = new Color(255, 255, 0);
             }
         }
 
         // Divide rooms into extreme and not
-        List<DungeonRoomStruct> extremeRooms = new List<DungeonRoomStruct>();
-        List<DungeonRoomStruct> notExtremeRooms = new List<DungeonRoomStruct>();
 
-        DivideRoomsIntoExtremeAndNot(emptyRooms, extremeRooms, notExtremeRooms);
-
-        Debug.Log("extremeRooms = " + extremeRooms.Count);
-        Debug.Log("notExtremeRooms = " + notExtremeRooms.Count);
+        DivideRoomsIntoExtremeAndNot(this.emptyRooms, this.extremeRooms, this.notExtremeRooms);
 
         // Build walls at the extreme positions of rooms and ending room
         float distanceTreshold = roomType.diameter * 0.1f;
@@ -193,15 +192,17 @@ public class DungeonCreator : MonoBehaviour
         {
             for (int i = 0; i < roomType.cornersCount; i++)
             {
-                Vector3 newPosition = CalculateNextPosition(room, i * room.type.cornerAngle);
+                Vector3 newPosition = MathFunctions.CalculateNewPosition(room, i * room.type.cornerAngle, room.type.diameter);
 
-                if (FindIndexWithTreshold(emptyRooms, newPosition, distanceTreshold) < 0)
+                if (MathFunctions.FindIndexWithTreshold(emptyRooms, newPosition, distanceTreshold) < 0)
                 {
                     float angle = MathFunctions.CalculateAngle(room.position, newPosition);
-                    walls.Add(Instantiate(roomType.wall, CalculateNextPosition(room, i * room.type.cornerAngle, room.type.diameter / 2f), Quaternion.Euler(new Vector3(0, 0, -angle))));
+                    walls.Add(Instantiate(roomType.wall, MathFunctions.CalculateNewPosition(room, i * room.type.cornerAngle, room.type.diameter / 2f), Quaternion.Euler(new Vector3(0, 0, -angle))));
                 }
             }
         }
+
+        BuildTraps();
 
         DungeonCreatedCallback();
     }
@@ -235,6 +236,23 @@ public class DungeonCreator : MonoBehaviour
         this.stairs.Add(stairs);
     }
 
+    private void BuildTraps()
+    {
+        int nTrapsToInstantiate = Random.Range(this.otherRooms.Count / 4, this.otherRooms.Count / 2);
+        int trapTypesLength = System.Enum.GetNames(typeof(TrapType.Type)).Length;
+        List<DungeonRoomStruct> rooms = new List<DungeonRoomStruct>();
+        this.otherRooms.ForEach(room => rooms.Add(room));
+
+        for (int i = 0; i < nTrapsToInstantiate; i++)
+        {
+            int roomIndex = Random.Range(0, rooms.Count);
+            DungeonRoomStruct room = rooms[roomIndex];
+            trapType.SetTrap((TrapType.Type)Random.Range(0, trapTypesLength));
+            traps.Add(trapType.InstantiateTrap(room, this.extremeRooms, this.walls));
+            rooms.RemoveAt(roomIndex);
+        }
+    }
+
     private void DungeonCreatedCallback()
     {
         GameObject gameManager = GameObject.FindWithTag("GameManager");
@@ -245,15 +263,6 @@ public class DungeonCreator : MonoBehaviour
         }
     }
 
-    private Vector3 CalculateNextPosition(DungeonRoomStruct room, float rotationAngle)
-    {
-        return CalculateNextPosition(room, rotationAngle, room.type.diameter);
-    }
-
-    private Vector3 CalculateNextPosition(DungeonRoomStruct room, float rotationAngle, float distance)
-    {
-        return MathFunctions.CalculateNewPosition(room.position, rotationAngle + room.rotation.eulerAngles.z, distance);
-    }
 
     private float CalculateNearestAngle(float angle, DungeonRoomStruct room)
     {
@@ -264,9 +273,9 @@ public class DungeonCreator : MonoBehaviour
 
         for (int i = 0; i < room.type.cornersCount; i++)
         {
-            Vector3 newPosition = CalculateNextPosition(room, i * room.type.cornerAngle);
+            Vector3 newPosition = MathFunctions.CalculateNewPosition(room, i * room.type.cornerAngle, room.type.diameter);
 
-            if (ContainsWithTreshold(emptyRoomsPositions, newPosition, room.type.diameter / 10f))
+            if (MathFunctions.ContainsWithTreshold(emptyRoomsPositions, newPosition, room.type.diameter / 10f))
             {
                 float newAngle = MathFunctions.CalculateAngle(room.position, newPosition);
                 float newAngleDifference = Mathf.Abs(angle - newAngle);
@@ -289,7 +298,7 @@ public class DungeonCreator : MonoBehaviour
         Vector3 nextRoomPosition = new Vector3(startingRoom.position.x + Mathf.Sin(Mathf.Deg2Rad * turnAroundAngle) * startingRoom.type.diameter,
                                                 startingRoom.position.y + Mathf.Cos(Mathf.Deg2Rad * turnAroundAngle) * startingRoom.type.diameter,
                                                 startingRoom.position.z);
-        int index = FindIndexWithTreshold(emptyRooms, nextRoomPosition, startingRoom.type.diameter / 10f);
+        int index = MathFunctions.FindIndexWithTreshold(emptyRooms, nextRoomPosition, startingRoom.type.diameter / 10f);
 
         return index < 0 ? startingRoom : emptyRooms[index];
     }
@@ -321,9 +330,9 @@ public class DungeonCreator : MonoBehaviour
 
         for (int i = 0; i < room.type.cornersCount; i++)
         {
-            Vector3 newPosition = CalculateNextPosition(room, i * room.type.cornerAngle);
+            Vector3 newPosition = MathFunctions.CalculateNewPosition(room, i * room.type.cornerAngle, room.type.diameter);
 
-            if (FindIndexWithTreshold(emptyRooms, newPosition, distanceTreshold) < 0)
+            if (MathFunctions.FindIndexWithTreshold(emptyRooms, newPosition, distanceTreshold) < 0)
             {
                 return true;
             }
@@ -347,66 +356,6 @@ public class DungeonCreator : MonoBehaviour
             {
                 notExtremeRooms.Add(room);
             }
-        }
-    }
-
-    private static bool CalculateDistanceWithTreshold(Vector2 p1, Vector2 p2, float treshold)
-    {
-        float distance = Vector3.Distance(p1, p2);
-
-        return distance < treshold;
-    }
-
-    private static bool ContainsWithTreshold(List<Vector3> positions, Vector3 position, float treshold)
-    {
-        foreach (Vector3 p in positions)
-        {
-            if (CalculateDistanceWithTreshold(p, position, treshold))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private int FindIndexWithTreshold(List<DungeonRoomStruct> rooms, Vector3 position, float treshold)
-    {
-        for (int i = 0; i < rooms.Count; i++)
-        {
-            if (CalculateDistanceWithTreshold(rooms[i].position, position, treshold))
-            {
-                return i;
-            }
-        }
-
-        return -1;
-    }
-
-    private GameObject FindWithTreshold(List<GameObject> gameObjects, Vector3 position, float treshold)
-    {
-        foreach (GameObject go in gameObjects)
-        {
-            if (CalculateDistanceWithTreshold(go.transform.position, position, treshold))
-            {
-                return go;
-            }
-        }
-
-        return null;
-    }
-
-    public readonly struct DungeonRoomStruct
-    {
-        public Vector3 position { get; }
-        public Quaternion rotation { get; }
-        public DungeonRoomType type { get; }
-
-        public DungeonRoomStruct(Vector3 position, Quaternion rotation, DungeonRoomType type)
-        {
-            this.position = position;
-            this.rotation = rotation;
-            this.type = type;
         }
     }
 }
