@@ -73,6 +73,7 @@ public class TrapType : MonoBehaviour
                 float trapAngle = CustomMath.MathFunctions.CalculateAngle(trapPosition, room.position);
                 trap.transform.position = trapPosition;
                 trap.transform.rotation = Quaternion.Euler(new Vector3(0, 0, -trapAngle));
+                trap.transform.rotation *= Quaternion.Euler(new Vector3(0, 90 * Random.Range(0, 4), 0));
 
                 return trap;
             }
@@ -87,6 +88,7 @@ public class TrapType : MonoBehaviour
         Vector3 trapPosition = new Vector3(room.position.x, room.position.y, room.position.z + room.type.wall.transform.localScale.z / 2 - room.type.floor.transform.localScale.z / 2);
         trap.transform.position = trapPosition;
         trap.transform.rotation = Quaternion.Euler(new Vector3(-90, 0, 0));
+        trap.transform.rotation *= Quaternion.Euler(new Vector3(0, room.type.cornerAngle * Random.Range(0, room.type.cornersCount), 0));
         return trap;
     }
 
