@@ -4,11 +4,10 @@ using UnityEngine;
 
 public class DungeonCreator : MonoBehaviour
 {
-    private const int DUNGEON_SIZE = 10;
-
     [SerializeField] private GameObject dungeonRoomTypeManagerPrefab;
     [SerializeField] private GameObject trapTypeManagerPrefab;
 
+    private DungeonDataStruct dungeonData;
     private DungeonRoomType roomType;
     private TrapType trapType;
     private DungeonRoomStruct startingRoom = new DungeonRoomStruct();
@@ -25,29 +24,24 @@ public class DungeonCreator : MonoBehaviour
 
     void Awake()
     {
+        InitializeDungeonData();
         roomType = Instantiate(dungeonRoomTypeManagerPrefab).GetComponent<DungeonRoomType>();
+        roomType.Set(this.dungeonData.floorType);
         trapType = Instantiate(trapTypeManagerPrefab).GetComponent<TrapType>();
-        CreateSpace(DUNGEON_SIZE, roomType);
+        CreateSpace(this.dungeonData.dungeonSize, roomType);
 
         BuildDungeon();
     }
 
-    // Start is called before the first frame update
-    void Start()
+    private void InitializeDungeonData()
     {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
+        this.dungeonData = GameManager.Instance.dungeonDataHandler;
     }
 
     // Create rooms structs
     private void CreateSpace(int size, DungeonRoomType roomType)
     {
-        int safePathStepsCount = Random.Range(size * size / 2, size * size);
+        int safePathStepsCount = this.dungeonData.safePathLength;
         float distanceTreshold = roomType.diameter * 0.99f;
         float halfCornerAngle = roomType.cornerAngle / 2f;
         bool isOddCorner = roomType.cornersCount % 2 == 0 ? false : true;
@@ -238,8 +232,14 @@ public class DungeonCreator : MonoBehaviour
 
     private void BuildTraps()
     {
+        int trapTypesLength = this.dungeonData.traps.Count;
+
+        if (trapTypesLength == 0)
+        {
+            return;
+        }
+
         int nTrapsToInstantiate = Random.Range(this.otherRooms.Count / 4, this.otherRooms.Count / 2);
-        int trapTypesLength = System.Enum.GetNames(typeof(TrapType.Type)).Length;
         List<DungeonRoomStruct> rooms = new List<DungeonRoomStruct>();
         this.otherRooms.ForEach(room => rooms.Add(room));
 
@@ -247,7 +247,8 @@ public class DungeonCreator : MonoBehaviour
         {
             int roomIndex = Random.Range(0, rooms.Count);
             DungeonRoomStruct room = rooms[roomIndex];
-            trapType.SetTrap((TrapType.Type)Random.Range(0, trapTypesLength));
+            TrapType.Type trapTypeType = this.dungeonData.traps[Random.Range(0, trapTypesLength)];
+            this.trapType.SetTrap(trapTypeType);
             traps.Add(trapType.InstantiateTrap(room, this.extremeRooms, this.walls));
             rooms.RemoveAt(roomIndex);
         }
@@ -255,12 +256,7 @@ public class DungeonCreator : MonoBehaviour
 
     private void DungeonCreatedCallback()
     {
-        GameObject gameManager = GameObject.FindWithTag("GameManager");
-
-        if (gameManager != null)
-        {
-            gameManager.GetComponent<GameManager>().dungeonCreatedEvent = (GameObject player) => Instantiate(player, startingRoom.position, Quaternion.identity);
-        }
+        GameManager.Instance.DungeonCreatedEvent = (GameObject player) => Instantiate(player, startingRoom.position, Quaternion.identity);
     }
 
 
