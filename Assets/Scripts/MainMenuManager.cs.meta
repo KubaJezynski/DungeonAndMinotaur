@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 12606683c52d0da4d8c5df49a503503c
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - trapCanvas: {fileID: 3494240464877285900, guid: d63b3caeb5ce7fe44b7acbfc159cd6d5, type: 3}
+  - roomTypeCanvas: {fileID: 3056064231633060910, guid: 796a3b4371531fd4fa964d6c8b9116f7, type: 3}
+  - roomTypeSettingSlider: {instanceID: 0}
+  - roomTypeSettingText: {instanceID: 0}
+  - dungeonSizeSettingSlider: {instanceID: 0}
+  - dungeonSizeSettingText: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,28 +1,65 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 
-public class GameManager : MonoBehaviour
+public class GameManager
 {
-    [SerializeField] private GameObject player;
+    private static readonly GameManager instance = new GameManager();
+    public static GameManager Instance { get { return instance; } }
 
-    public Action<GameObject> dungeonCreatedEvent { private get; set; }
+    private GameObject playerPrefab = Resources.Load("Player") as GameObject;
 
-    // Start is called before the first frame update
-    void Start()
+    private GameState state = GameState.MAIN_MENU;
+    public GameState State
+    {
+        set
+        {
+            if (state == value)
+            {
+                return;
+            }
+
+            state = value;
+
+            switch (state)
+            {
+                case GameState.MAIN_MENU:
+                    break;
+                case GameState.IN_GAME:
+                    break;
+                case GameState.AFTER_GAME:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(state), state, null);
+            }
+
+            onGameStateChanged?.Invoke(state);
+        }
+    }
+
+    private Action<GameObject> dungeonCreatedEvent;
+    public Action<GameObject> DungeonCreatedEvent
+    {
+        set
+        {
+            Debug.Log("playerPrefab = " + playerPrefab);
+            dungeonCreatedEvent = value;
+            dungeonCreatedEvent.Invoke(playerPrefab);
+        }
+    }
+    public Action<GameState> onGameStateChanged { private get; set; }
+
+    public DungeonDataStruct dungeonDataHandler = new DungeonDataStruct(1, 1, DungeonRoomType.FloorType.QUADRANGULAR, new List<TrapType.Type>());
+
+    private GameManager()
     {
 
     }
 
-    // Update is called once per frame
-    void Update()
+    public enum GameState
     {
-        if (dungeonCreatedEvent != null)
-        {
-            dungeonCreatedEvent.Invoke(player);
-            dungeonCreatedEvent = null;
-        }
+        MAIN_MENU,
+        IN_GAME,
+        AFTER_GAME
     }
 }

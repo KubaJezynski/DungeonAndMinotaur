@@ -5,6 +5,7 @@ MonoImporter:
   serializedVersion: 2
   defaultReferences:
   - camera: {fileID: 6546255694916985032, guid: b2de68a0378c77143a4760be39de73d1, type: 3}
+  - canvas: {fileID: 6782439737257231247, guid: bef9b3f93b257234babd641df32a6a89, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
