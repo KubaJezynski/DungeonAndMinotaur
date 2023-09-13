@@ -25,6 +25,7 @@ public class GameManager
             switch (state)
             {
                 case GameState.MAIN_MENU:
+                    SceneManager.LoadScene("MainMenu");
                     break;
                 case GameState.IN_GAME:
                     SceneManager.LoadScene("InGame");
