@@ -12,7 +12,22 @@ public class PlayerManager : MonoBehaviour
 
     public System.Func<int> takeDamageEvent { private get; set; }
     private int health = MAX_HEALTH;
-    public int Health { get { return health; } }
+    public int Health
+    {
+        get
+        {
+            return health;
+        }
+        private set
+        {
+            health = value;
+
+            if (health <= 0)
+            {
+                Dead();
+            }
+        }
+    }
     private float energy = MAX_ENERGY;
     public float Energy { get { return energy; } }
 
@@ -47,7 +62,7 @@ public class PlayerManager : MonoBehaviour
     {
         if (takeDamageEvent != null)
         {
-            health -= takeDamageEvent.Invoke();
+            Health -= takeDamageEvent.Invoke();
             takeDamageEvent = null;
         }
     }
@@ -72,5 +87,11 @@ public class PlayerManager : MonoBehaviour
         }
 
         return energy == 0;
+    }
+
+    private void Dead()
+    {
+        GameManager.Instance.match.State = Match.MatchState.DEFEAT;
+        GameManager.Instance.State = GameManager.GameState.AFTER_GAME;
     }
 }
