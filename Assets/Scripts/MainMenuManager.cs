@@ -63,8 +63,7 @@ public class MainMenuManager : MonoBehaviour
         dungeonData = new DungeonDataStruct(this.safePathLength, this.dungeonSize, this.floorType, this.traps);
         GameManager.Instance.onGameStateChanged = (state) =>
         {
-            GameManager.Instance.dungeonDataHandler = dungeonData;
-            SceneManager.LoadScene("InGame");
+            GameManager.Instance.match.dungeonDataHandler = dungeonData;
             GameManager.Instance.onGameStateChanged = (state) => { };
         };
         GameManager.Instance.State = GameManager.GameState.IN_GAME;

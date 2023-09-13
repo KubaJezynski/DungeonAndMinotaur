@@ -12,6 +12,7 @@ public class DungeonCreator : MonoBehaviour
     private TrapType trapType;
     private DungeonRoomStruct startingRoom = new DungeonRoomStruct();
     private DungeonRoomStruct endingRoom = new DungeonRoomStruct();
+    private DungeonRoomStruct exitRoom = new DungeonRoomStruct();
     private List<DungeonRoomStruct> emptyRooms = new List<DungeonRoomStruct>();
     private List<DungeonRoomStruct> safeRooms = new List<DungeonRoomStruct>();
     private List<DungeonRoomStruct> otherRooms = new List<DungeonRoomStruct>();
@@ -35,7 +36,7 @@ public class DungeonCreator : MonoBehaviour
 
     private void InitializeDungeonData()
     {
-        this.dungeonData = GameManager.Instance.dungeonDataHandler;
+        this.dungeonData = GameManager.Instance.match.dungeonDataHandler;
     }
 
     // Create rooms structs
@@ -157,6 +158,7 @@ public class DungeonCreator : MonoBehaviour
         }
 
         BuildStairs(endingRoom);
+        BuildExit(endingRoom);
 
         /* Just color starting room on green, ending room on red, safe path on yellow, delete later */
         foreach (GameObject floor in floors)
@@ -230,6 +232,25 @@ public class DungeonCreator : MonoBehaviour
         this.stairs.Add(stairs);
     }
 
+    private void BuildExit(DungeonRoomStruct room)
+    {
+        GameObject stairs = this.stairs[this.stairs.Count - 1];
+        Vector3 exitPosition = MathFunctions.CalculateNewPosition(stairs.transform.position, -stairs.transform.eulerAngles.z, room.type.diameter);
+        exitPosition = new Vector3(exitPosition.x, exitPosition.y, exitPosition.z - room.type.wall.transform.localScale.z);
+        this.exitRoom = new DungeonRoomStruct(exitPosition, Quaternion.Euler(new Vector3(0, 0, -stairs.transform.eulerAngles.z)), room.type);
+        GameObject exitFloor = Instantiate(room.type.floor, new Vector3(this.exitRoom.position.x, this.exitRoom.position.y, this.exitRoom.position.z + room.type.wall.transform.localScale.z / 2f), room.rotation);
+        BoxCollider boxCollider = exitFloor.AddComponent<BoxCollider>();
+        boxCollider.size = new Vector3(boxCollider.size.x, boxCollider.size.y, room.type.wall.transform.localScale.z);
+        boxCollider.center = new Vector3(boxCollider.center.x, boxCollider.center.y, -2.5f);
+        boxCollider.isTrigger = true;
+        boxCollider.includeLayers = LayerMask.GetMask(new string[] { "Character" });
+        exitFloor.AddComponent<ExitRoom>();
+        floors.Add(exitFloor);
+
+        /* Just color exit room on blue, delete later */
+        exitFloor.GetComponent<Renderer>().material.color = new Color(0, 0, 255);
+    }
+
     private void BuildTraps()
     {
         int trapTypesLength = this.dungeonData.traps.Count;
@@ -256,7 +277,8 @@ public class DungeonCreator : MonoBehaviour
 
     private void DungeonCreatedCallback()
     {
-        GameManager.Instance.DungeonCreatedEvent = (GameObject player) => Instantiate(player, startingRoom.position, Quaternion.identity);
+        GameManager.Instance.match.DungeonCreatedEvent = (GameObject player) => Instantiate(player, startingRoom.position, Quaternion.identity);
+        GameManager.Instance.match.State = Match.MatchState.START;
     }
 
 
