@@ -13,8 +13,8 @@ public class PlayerManager : MonoBehaviour
     public System.Func<int> takeDamageEvent { private get; set; }
     private int health = MAX_HEALTH;
     public int Health { get { return health; } }
-    private int energy = MAX_ENERGY;
-    public int Energy { get { return energy; } }
+    private float energy = MAX_ENERGY;
+    public float Energy { get { return energy; } }
 
     void Awake()
     {
@@ -56,7 +56,7 @@ public class PlayerManager : MonoBehaviour
     {
         if (energy != MAX_ENERGY)
         {
-            energy++;
+            energy += Time.deltaTime * MAX_ENERGY;
             energy = energy > MAX_ENERGY ? MAX_ENERGY : energy;
         }
 
@@ -67,7 +67,7 @@ public class PlayerManager : MonoBehaviour
     {
         if (energy != 0)
         {
-            energy--;
+            energy -= Time.deltaTime * MAX_ENERGY;
             energy = energy < 0 ? 0 : energy;
         }
 
