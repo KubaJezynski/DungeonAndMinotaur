@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class TrapChopper_Blade : MonoBehaviour
 {
-    private static float ROTATION_SPEED = 2.5f;
+    private static int ROTATION_SPEED = 360;
     private static int DAMAGE = 8;
 
     private BladeState state = BladeState.IDLE;
@@ -14,10 +14,14 @@ public class TrapChopper_Blade : MonoBehaviour
 
             if (state == BladeState.IDLE)
             {
+                this.GetComponent<MeshCollider>().enabled = false;
+
                 actionEvent = () => { };
             }
             else if (state == BladeState.CHOPPING)
             {
+                this.GetComponent<MeshCollider>().enabled = true;
+
                 actionEvent = () =>
                 {
                     rotationEvent.Invoke();
@@ -27,7 +31,7 @@ public class TrapChopper_Blade : MonoBehaviour
             {
                 actionEvent = () =>
                 {
-                    this.transform.localEulerAngles -= new Vector3(0, 0, ROTATION_SPEED);
+                    this.transform.localEulerAngles -= new Vector3(0, 0, ROTATION_SPEED * Time.deltaTime);
                     float angle = this.transform.localEulerAngles.z;
                     angle = (angle > 180) ? angle - 360 : angle;
 
@@ -50,9 +54,12 @@ public class TrapChopper_Blade : MonoBehaviour
 
             if (rotationState == BladeRotationState.LEFT)
             {
+                this.GetComponent<MeshCollider>().enabled = false;
+                this.GetComponent<MeshCollider>().enabled = true;
+
                 rotationEvent = () =>
                 {
-                    this.transform.localEulerAngles += new Vector3(0, 0, ROTATION_SPEED);
+                    this.transform.localEulerAngles += new Vector3(0, 0, ROTATION_SPEED * Time.deltaTime);
 
                     if (this.transform.localEulerAngles.z > 180)
                     {
@@ -63,9 +70,12 @@ public class TrapChopper_Blade : MonoBehaviour
             }
             else if (rotationState == BladeRotationState.RIGHT)
             {
+                this.GetComponent<MeshCollider>().enabled = false;
+                this.GetComponent<MeshCollider>().enabled = true;
+
                 rotationEvent = () =>
                 {
-                    this.transform.localEulerAngles -= new Vector3(0, 0, ROTATION_SPEED);
+                    this.transform.localEulerAngles -= new Vector3(0, 0, ROTATION_SPEED * Time.deltaTime);
                     float angle = this.transform.localEulerAngles.z;
                     angle = (angle > 180) ? angle - 360 : angle;
 
