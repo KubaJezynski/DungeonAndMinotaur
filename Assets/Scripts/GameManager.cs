@@ -1,28 +1,58 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
-public class GameManager : MonoBehaviour
+public class GameManager
 {
-    [SerializeField] private GameObject player;
+    private static readonly GameManager instance = new GameManager();
+    public static GameManager Instance { get { return instance; } }
 
-    public Action<GameObject> dungeonCreatedEvent { private get; set; }
+    public Match match = new Match();
 
-    // Start is called before the first frame update
-    void Start()
+    private GameState state = GameState.MAIN_MENU;
+    public GameState State
+    {
+        set
+        {
+            if (state == value)
+            {
+                return;
+            }
+
+            state = value;
+
+            switch (state)
+            {
+                case GameState.MAIN_MENU:
+                    SceneManager.LoadScene("MainMenu");
+                    break;
+                case GameState.IN_GAME:
+                    SceneManager.LoadScene("InGame");
+                    break;
+                case GameState.AFTER_GAME:
+                    SceneManager.LoadScene("AfterGame");
+                    match.State = Match.MatchState.END;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(state), state, null);
+            }
+
+            onGameStateChanged?.Invoke(state);
+        }
+    }
+
+    public Action<GameState> onGameStateChanged { private get; set; }
+
+    private GameManager()
     {
 
     }
 
-    // Update is called once per frame
-    void Update()
+    public enum GameState
     {
-        if (dungeonCreatedEvent != null)
-        {
-            dungeonCreatedEvent.Invoke(player);
-            dungeonCreatedEvent = null;
-        }
+        MAIN_MENU,
+        IN_GAME,
+        AFTER_GAME
     }
 }

@@ -22,10 +22,15 @@ public class DungeonRoomType : MonoBehaviour
 
     void Awake()
     {
-        Create(FloorType.OCTAGONAL, SIDE_LENGTH);
+        Set(FloorType.OCTAGONAL, SIDE_LENGTH);
     }
 
-    private void Create(FloorType floorType, int sideLength)
+    public void Set(FloorType floorType)
+    {
+        Set(floorType, SIDE_LENGTH);
+    }
+
+    private void Set(FloorType floorType, int sideLength)
     {
         float r;
 
