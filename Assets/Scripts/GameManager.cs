@@ -42,7 +42,6 @@ public class GameManager
     {
         set
         {
-            Debug.Log("playerPrefab = " + playerPrefab);
             dungeonCreatedEvent = value;
             dungeonCreatedEvent.Invoke(playerPrefab);
         }

@@ -39,7 +39,7 @@ public class MainMenuManager : MonoBehaviour
             Button roomTypeButton = roomTypeCanvas.GetComponentInChildren<Button>();
             Text roomTypeText = roomTypeButton.GetComponentInChildren<Text>();
             roomTypeText.text = Enum.GetName(typeof(DungeonRoomType.FloorType), e);
-            roomTypeButton.onClick.AddListener(() => { roomTypeSettingButtonText.text = roomTypeText.text; this.floorType = (DungeonRoomType.FloorType)e; Debug.Log(this.floorType); });
+            roomTypeButton.onClick.AddListener(() => { roomTypeSettingButtonText.text = roomTypeText.text; this.floorType = (DungeonRoomType.FloorType)e; });
             roomTypeCanvas.transform.parent = roomTypesContainer.transform;
         }
     }
